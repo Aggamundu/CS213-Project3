@@ -24,6 +24,8 @@ public class HelloController implements Initializable {
     @FXML
     private TextField lname;
     @FXML
+    private DatePicker date;
+    @FXML
     private DatePicker dob;
     @FXML
     private ChoiceBox timeslotBox;
@@ -31,6 +33,8 @@ public class HelloController implements Initializable {
     private ChoiceBox providerBox;
     @FXML
     private RadioButton imagingButton, officeButton;
+    @FXML
+    private Button scheduleButton;
 
     private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
@@ -150,44 +154,45 @@ public class HelloController implements Initializable {
         // Recursive call for the next pair
         reverseWithRecursion(list, start + 1, end - 1);
     }
+
     /**
      * Schedules a doctor appointment.
      */
-    private void scheduleDoctorAppointment(String[] parts) {
-        if (parts.length != 7) {
-            System.out.println("Missing data tokens");
-            return;
-        }
-        String dateString = parts[1];
-        String timeSlotString = parts[2];
-        String firstName = parts[3];
-        String lastName = parts[4];
-        String dobString = parts[5];
-        String npiString = parts[6];
+    @FXML
+    private void scheduleDoctorAppointment() {
+
+        String dateString = date.getValue().toString();
+        String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
+        String firstName = fname.getText();
+        String lastName = lname.getText();
+        String dobString = dob.getValue().toString();
+        String prov = (String) providerBox.getValue();
+        String[] sArr = prov.split(" ");
+        String npiString = sArr[2].substring(1,3);
         Date date = dateisValid(dateString);
         if (date == null) return;
         Timeslot timeslot = getTimeslotFromString(timeSlotString);
-        if (timeslot == null) {System.out.println(timeSlotString + " is not a valid time slot.");return;}
+        if (timeslot == null) {output.appendText(timeSlotString + " is not a valid time slot.\n");return;}
         Date dob = birthDateisValid(dobString);
         if (dob == null) return;
         Patient patient = new Patient(firstName, lastName, dob);
         Doctor doctor = null;
         for (Provider provider : providers) {
             if (provider instanceof Doctor && ((Doctor) provider).getNpi().equals(npiString)) {doctor = (Doctor) provider;break;}}
-        if (doctor == null) {System.out.println(npiString + " - provider doesn't exist.");return;}
+        if (doctor == null) {output.appendText(npiString + " - provider doesn't exist.\n");return;}
         // Check for existing appointments
         if (containsSamePerson(appointments, patient, date, timeslot) != null) {
             Person person = containsSamePerson(appointments, patient, date, timeslot);
-            System.out.println(person.getFirstName() + " " + person.getLastName() + " " + person.getDob() + " has an existing appointment at the same time slot.");
+            output.appendText(person.getFirstName() + " " + person.getLastName() + " " + person.getDob() + " has an existing appointment at the same time slot.\n");
             return;}
         // Check doctor's availability
         for (Appointment appointment : appointments) {
-            if (appointment.getDate().equals(date) && appointment.getProvider().equals(doctor) && appointment.getTimeslot().equals(timeslot)) {System.out.println(doctor.toString() + " is not available at slot " + timeSlotString + ".");return;}
+            if (appointment.getDate().equals(date) && appointment.getProvider().equals(doctor) && appointment.getTimeslot().equals(timeslot)) {output.appendText(doctor.toString() + " is not available at slot " + timeSlotString + ".\n");return;}
         }
         // No conflicts, create the new appointment
         Appointment officeAppointment = new Appointment(date, timeslot, patient, doctor);
         appointments.add(officeAppointment);
-        System.out.println(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.");
+        output.appendText(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.\n");
     }
     /**
      *  Determines whether date is valid
@@ -195,12 +200,12 @@ public class HelloController implements Initializable {
      * @return nall if not valid, Date object if valid
      */
     public Date dateisValid(String dateString) {
-        String[] appointmentDate = dateString.split("/");
-        Date thisDate = new Date(Integer.parseInt(appointmentDate[2]), Integer.parseInt(appointmentDate[0]), Integer.parseInt(appointmentDate[1]));
+        String[] appointmentDate = dateString.split("-");
+        Date thisDate = new Date(Integer.parseInt(appointmentDate[0]), Integer.parseInt(appointmentDate[1]), Integer.parseInt(appointmentDate[2]));
         Calendar inputDate = Calendar.getInstance();
-        inputDate.set(Calendar.YEAR, Integer.parseInt(appointmentDate[2]));
-        inputDate.set(Calendar.MONTH, Integer.parseInt(appointmentDate[0]) - 1); // Month is 0-indexed in Calendar
-        inputDate.set(Calendar.DAY_OF_MONTH, Integer.parseInt(appointmentDate[1]));
+        inputDate.set(Calendar.YEAR, Integer.parseInt(appointmentDate[0]));
+        inputDate.set(Calendar.MONTH, Integer.parseInt(appointmentDate[1]) - 1); // Month is 0-indexed in Calendar
+        inputDate.set(Calendar.DAY_OF_MONTH, Integer.parseInt(appointmentDate[2]));
 
         Calendar today = Calendar.getInstance();
         today.set(Calendar.HOUR_OF_DAY, 0);
@@ -210,20 +215,20 @@ public class HelloController implements Initializable {
 
         // Validations for date
         if (!thisDate.isValid()) {
-            System.out.println("Appointment date: " + dateString + " is not a valid calendar date.");
+            output.appendText("Appointment date: " + dateString + " is not a valid calendar date.\n");
             return null;
         }
         if (inputDate.before(today)) {
-            System.out.println("Appointment date: " + dateString + " is today or a date before today.");
+            output.appendText("Appointment date: " + dateString + " is today or a date before today.\n");
             return null;
         }
 
         if (!thisDate.isWeekday()) {
-            System.out.println("Appointment date: " + dateString + " is Saturday or Sunday.");
+            output.appendText("Appointment date: " + dateString + " is Saturday or Sunday.");
             return null;
         }
         if (!thisDate.isWithinSixMonths()) {
-            System.out.println("Appointment date: " + dateString + " is not within six months.");
+            output.appendText("Appointment date: " + dateString + " is not within six months.");
             return null;
         }
         return thisDate;
@@ -268,13 +273,13 @@ public class HelloController implements Initializable {
      * @return null if not valid, object if valid
      */
     public Date birthDateisValid(String birthString) {
-        String[] birthDate = birthString.split("/");
-        Date thisDate = new Date(Integer.parseInt(birthDate[2]), Integer.parseInt(birthDate[0]), Integer.parseInt(birthDate[1]));
+        String[] birthDate = birthString.split("-");
+        Date thisDate = new Date(Integer.parseInt(birthDate[0]), Integer.parseInt(birthDate[1]), Integer.parseInt(birthDate[2]));
 
         Calendar inputDate = Calendar.getInstance();
-        inputDate.set(Calendar.YEAR, Integer.parseInt(birthDate[2]));
-        inputDate.set(Calendar.MONTH, Integer.parseInt(birthDate[0]) - 1);
-        inputDate.set(Calendar.DAY_OF_MONTH, Integer.parseInt(birthDate[1]));
+        inputDate.set(Calendar.YEAR, Integer.parseInt(birthDate[0]));
+        inputDate.set(Calendar.MONTH, Integer.parseInt(birthDate[1]) - 1);
+        inputDate.set(Calendar.DAY_OF_MONTH, Integer.parseInt(birthDate[2]));
 
         Calendar today = Calendar.getInstance();
         today.set(Calendar.HOUR_OF_DAY, 0);
@@ -283,11 +288,11 @@ public class HelloController implements Initializable {
         today.set(Calendar.MILLISECOND, 0);
 
         if (!thisDate.isValid()) {
-            System.out.println("Patient dob: " + birthString + " is not a valid calendar date.");
+            output.appendText("Patient dob: " + birthString + " is not a valid calendar date.\n");
             return null;
         }
         if (inputDate.after(today)) {
-            System.out.println("Patient dob: " + birthString + " is today or a date after today.");
+            output.appendText("Patient dob: " + birthString + " is today or a date after today.\n");
             return null;
         }
         return thisDate;
