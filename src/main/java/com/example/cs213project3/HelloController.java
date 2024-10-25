@@ -20,10 +20,6 @@ public class HelloController implements Initializable {
     @FXML
     private TextArea output;
     @FXML
-    private Button loadProvidersButton;
-    @FXML
-    private DatePicker date;
-    @FXML
     private TextField fname;
     @FXML
     private TextField lname;
@@ -32,13 +28,28 @@ public class HelloController implements Initializable {
     @FXML
     private ChoiceBox timeslotBox;
     @FXML
-    private ChoiceBox providersBox;
+    private ChoiceBox providerBox;
+    @FXML
+    private RadioButton imagingButton, officeButton;
 
-    private String[] timeslots = {"9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
+    private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
+    private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         timeslotBox.getItems().addAll(timeslots);
+        timeslotBox.getSelectionModel().selectFirst();
+        providerBox.getItems().addAll(providersArr);
+        providerBox.getSelectionModel().selectFirst();
+    }
+    @FXML
+    void disableProviders(){
+        if(imagingButton.isSelected()){
+            providerBox.setDisable(true);
+        }
+        if(officeButton.isSelected()){
+            providerBox.setDisable(false);
+        }
     }
     @FXML
     void loadProviders() {
