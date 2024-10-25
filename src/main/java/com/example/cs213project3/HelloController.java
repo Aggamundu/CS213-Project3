@@ -1,16 +1,19 @@
 package com.example.cs213project3;
 
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Calendar;
+import java.util.ResourceBundle;
 import java.util.Scanner;
 
 
-public class HelloController {
+public class HelloController implements Initializable {
     private static List<Provider> providers = new List<>(); // Single list for all providers
     private static List<Appointment> appointments = new List<>(); // Single list for both office and imaging appointments
     private static List<Technician> technicians = new List<>();
@@ -26,8 +29,17 @@ public class HelloController {
     private TextField lname;
     @FXML
     private DatePicker dob;
+    @FXML
+    private ChoiceBox timeslotBox;
+    @FXML
+    private ChoiceBox providersBox;
 
+    private String[] timeslots = {"9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
 
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        timeslotBox.getItems().addAll(timeslots);
+    }
     @FXML
     void loadProviders() {
         try {
@@ -274,4 +286,6 @@ public class HelloController {
     void clear(){
         output.clear();
     }
+
+
 }
