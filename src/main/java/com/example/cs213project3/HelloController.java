@@ -6,6 +6,7 @@ import javafx.scene.control.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.Calendar;
 import java.util.Scanner;
 
 
@@ -17,6 +18,16 @@ public class HelloController {
     private TextArea output;
     @FXML
     private Button loadProvidersButton;
+    @FXML
+    private DatePicker date;
+    @FXML
+    private TextField fname;
+    @FXML
+    private TextField lname;
+    @FXML
+    private DatePicker dob;
+
+
     @FXML
     void loadProviders() {
         try {
@@ -116,7 +127,148 @@ public class HelloController {
         // Recursive call for the next pair
         reverseWithRecursion(list, start + 1, end - 1);
     }
+    /**
+     * Schedules a doctor appointment.
+     */
+    private void scheduleDoctorAppointment(String[] parts) {
+        if (parts.length != 7) {
+            System.out.println("Missing data tokens");
+            return;
+        }
+        String dateString = parts[1];
+        String timeSlotString = parts[2];
+        String firstName = parts[3];
+        String lastName = parts[4];
+        String dobString = parts[5];
+        String npiString = parts[6];
+        Date date = dateisValid(dateString);
+        if (date == null) return;
+        Timeslot timeslot = getTimeslotFromString(timeSlotString);
+        if (timeslot == null) {System.out.println(timeSlotString + " is not a valid time slot.");return;}
+        Date dob = birthDateisValid(dobString);
+        if (dob == null) return;
+        Patient patient = new Patient(firstName, lastName, dob);
+        Doctor doctor = null;
+        for (Provider provider : providers) {
+            if (provider instanceof Doctor && ((Doctor) provider).getNpi().equals(npiString)) {doctor = (Doctor) provider;break;}}
+        if (doctor == null) {System.out.println(npiString + " - provider doesn't exist.");return;}
+        // Check for existing appointments
+        if (containsSamePerson(appointments, patient, date, timeslot) != null) {
+            Person person = containsSamePerson(appointments, patient, date, timeslot);
+            System.out.println(person.getFirstName() + " " + person.getLastName() + " " + person.getDob() + " has an existing appointment at the same time slot.");
+            return;}
+        // Check doctor's availability
+        for (Appointment appointment : appointments) {
+            if (appointment.getDate().equals(date) && appointment.getProvider().equals(doctor) && appointment.getTimeslot().equals(timeslot)) {System.out.println(doctor.toString() + " is not available at slot " + timeSlotString + ".");return;}
+        }
+        // No conflicts, create the new appointment
+        Appointment officeAppointment = new Appointment(date, timeslot, patient, doctor);
+        appointments.add(officeAppointment);
+        System.out.println(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.");
+    }
+    /**
+     *  Determines whether date is valid
+     * @param dateString input string
+     * @return nall if not valid, Date object if valid
+     */
+    public Date dateisValid(String dateString) {
+        String[] appointmentDate = dateString.split("/");
+        Date thisDate = new Date(Integer.parseInt(appointmentDate[2]), Integer.parseInt(appointmentDate[0]), Integer.parseInt(appointmentDate[1]));
+        Calendar inputDate = Calendar.getInstance();
+        inputDate.set(Calendar.YEAR, Integer.parseInt(appointmentDate[2]));
+        inputDate.set(Calendar.MONTH, Integer.parseInt(appointmentDate[0]) - 1); // Month is 0-indexed in Calendar
+        inputDate.set(Calendar.DAY_OF_MONTH, Integer.parseInt(appointmentDate[1]));
 
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
+        // Validations for date
+        if (!thisDate.isValid()) {
+            System.out.println("Appointment date: " + dateString + " is not a valid calendar date.");
+            return null;
+        }
+        if (inputDate.before(today)) {
+            System.out.println("Appointment date: " + dateString + " is today or a date before today.");
+            return null;
+        }
+
+        if (!thisDate.isWeekday()) {
+            System.out.println("Appointment date: " + dateString + " is Saturday or Sunday.");
+            return null;
+        }
+        if (!thisDate.isWithinSixMonths()) {
+            System.out.println("Appointment date: " + dateString + " is not within six months.");
+            return null;
+        }
+        return thisDate;
+    }
+    /**
+     * Searches list to find same person
+     * @param appointments List to be serached
+     * @param person person to be found
+     * @param date date of person
+     * @param timeslot of appointment
+     * @return null if none found, else person of the person found
+     */
+    public Person containsSamePerson(List<Appointment> appointments, Person person, Date date, Timeslot timeslot) {
+        for (Appointment currentAppointment : appointments) {
+            if (currentAppointment.getDate().equals(date) &&
+                    currentAppointment.getTimeslot().equals(timeslot) && person.equals(currentAppointment.getPatient())) {
+                return currentAppointment.getPatient(); // Found a conflict with a different patient
+            }
+        }
+        return null; // No conflicting appointment found
+    }
+    /**
+     * Returns timeslot obj from string
+     * @param timeSlotString input string
+     * @return null if not found, else the timeslot obj from the string
+     */
+    private Timeslot getTimeslotFromString(String timeSlotString) {
+        try {
+            int slotNumber = Integer.parseInt(timeSlotString);
+            Timeslot timeslot = new Timeslot(slotNumber);
+            if (timeslot.getHour() == -1 && timeslot.getMinute() == -1) {
+                return null;
+            }
+            return timeslot;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+    /**
+     * Checks whether birthdate is valid
+     * @param birthString input string
+     * @return null if not valid, object if valid
+     */
+    public Date birthDateisValid(String birthString) {
+        String[] birthDate = birthString.split("/");
+        Date thisDate = new Date(Integer.parseInt(birthDate[2]), Integer.parseInt(birthDate[0]), Integer.parseInt(birthDate[1]));
+
+        Calendar inputDate = Calendar.getInstance();
+        inputDate.set(Calendar.YEAR, Integer.parseInt(birthDate[2]));
+        inputDate.set(Calendar.MONTH, Integer.parseInt(birthDate[0]) - 1);
+        inputDate.set(Calendar.DAY_OF_MONTH, Integer.parseInt(birthDate[1]));
+
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+
+        if (!thisDate.isValid()) {
+            System.out.println("Patient dob: " + birthString + " is not a valid calendar date.");
+            return null;
+        }
+        if (inputDate.after(today)) {
+            System.out.println("Patient dob: " + birthString + " is today or a date after today.");
+            return null;
+        }
+        return thisDate;
+    }
 
     @FXML
     void clear(){
