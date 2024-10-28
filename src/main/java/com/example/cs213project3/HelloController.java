@@ -35,17 +35,34 @@ public class HelloController implements Initializable {
     private RadioButton imagingButton, officeButton;
     @FXML
     private Button scheduleButton;
+    @FXML
+    private ChoiceBox imagingBox;
 
     private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
+    private final String[] imagingServ = {"catscan", "ultrasound", "xray"};
 
+    private int technicianRotationIndex = 0;
+
+
+    /**
+     * Method to set up U.I. components before they are displayed to user
+     * @param url a reference location to the FXML file
+     * @param resourceBundle a bundle of resources, such as localized strings
+     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         timeslotBox.getItems().addAll(timeslots);
         timeslotBox.getSelectionModel().selectFirst();
         providerBox.getItems().addAll(providersArr);
         providerBox.getSelectionModel().selectFirst();
+        imagingBox.getItems().addAll(imagingServ);
+        imagingBox.getSelectionModel().selectFirst();
     }
+
+    /**
+     * When a box is selected, we turn one off and make sure the other is off.
+     */
     @FXML
     void disableProviders(){
         if(imagingButton.isSelected()){
@@ -55,6 +72,10 @@ public class HelloController implements Initializable {
             providerBox.setDisable(false);
         }
     }
+
+    /**
+     * This class loads all the providers from the providers.txt list and sorts them.
+     */
     @FXML
     void loadProviders() {
         try {
@@ -94,6 +115,10 @@ public class HelloController implements Initializable {
         }
         displayRotations();
     }
+
+    /**
+     * Display the loaded providers sorted by profile and maintain the rotation list for technicians.
+     */
     public void displayRotations() {
         output.appendText("\nRotation list for the technicians.\n");
         try {
@@ -155,12 +180,22 @@ public class HelloController implements Initializable {
         reverseWithRecursion(list, start + 1, end - 1);
     }
 
+
+    @FXML
+    private void handleSchedule() {
+        if(imagingButton.isSelected()){
+            scheduleImagingAppointment();
+        }
+        if(officeButton.isSelected()){
+            scheduleDoctorAppointment();;
+        }
+    }
+
     /**
      * Schedules a doctor appointment.
      */
     @FXML
     private void scheduleDoctorAppointment() {
-
         String dateString = date.getValue().toString();
         String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
         String firstName = fname.getText();
@@ -194,6 +229,102 @@ public class HelloController implements Initializable {
         appointments.add(officeAppointment);
         output.appendText(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.\n");
     }
+
+    /**
+     * Schedules a imaging appointment.
+     */
+  @FXML
+  private void scheduleImagingAppointment() {
+      String dateString = date.getValue().toString();
+      String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
+      String firstName = fname.getText();
+      String lastName = lname.getText();
+      String dobString = dob.getValue().toString();
+      String imagingString = (String) imagingBox.getValue();
+      Date date = dateisValid(dateString);
+      if (date == null) return;
+      Timeslot timeslot = getTimeslotFromString(timeSlotString);
+      if (timeslot == null) {output.appendText(timeSlotString + " is not a valid time slot.\n");return;}
+      Date dob = birthDateisValid(dobString);
+      if (dob == null) return;
+      Patient patient = new Patient(firstName, lastName, dob);
+      //Validate the imaging Service
+      Radiology imagingService;
+      try {imagingService = Radiology.valueOf(imagingString.toUpperCase());}
+      catch (IllegalArgumentException e) {
+          output.appendText(imagingString + " - imaging service not provided.");
+          return;
+      }
+      // Check for existing appointments for the patient
+      if (containsSamePerson(appointments, patient, date, timeslot) != null) {
+          output.appendText(firstName + " " + lastName + " " + dobString + " has an existing appointment at the same time slot.");
+          return;
+      }
+      // Circular rotation logic to find the next available technician
+      int checkedTechnicians = 0;
+      Technician selectedTechnician = null;
+      while (checkedTechnicians < technicians.size()) {
+          Technician currentTechnician = technicians.get(technicianRotationIndex);
+          // Check if the technician is available at the requested timeslot and location
+          boolean isAvailable = checkTechnicianAvailability(currentTechnician, date, timeslot, imagingService);
+          if (isAvailable) {selectedTechnician = currentTechnician;break;} // Found an available technician
+          // Move to the next technician in the circular rotation
+          technicianRotationIndex = (technicianRotationIndex + 1) % technicians.size();
+          checkedTechnicians++;
+      }
+      // If no technician is found, output a message
+      if (selectedTechnician == null) {
+          output.appendText("Cannot find an available technician at all locations for " + imagingService + " at slot " + timeSlotString + ".");
+          return;
+      }
+      // Create the imaging appointment
+      Imaging imagingAppointment = new Imaging(date, timeslot, patient, selectedTechnician, imagingService);
+      appointments.add(imagingAppointment);
+      output.appendText(dateString + " " + timeslot + " " + firstName + " " + lastName + " " + dobString + " " + selectedTechnician.toString() + "[" + imagingString.toUpperCase() +  "] booked.");
+      // Move the rotation to the next technician for future appointments
+      technicianRotationIndex = (technicianRotationIndex + 1) % technicians.size();
+  }
+
+    /**
+     * Checks if a technician is available for a given date, timeslot, and imaging service.
+     *
+     * @param technician the technician to check.
+     * @param date the date of the appointment.
+     * @param timeslot the timeslot of the appointment.
+     * @param imagingService the requested imaging service (XRAY, CATSCAN, ULTRASOUND).
+     * @return true if the technician is available, false otherwise.
+     */
+    private boolean checkTechnicianAvailability(Technician technician, Date date, Timeslot timeslot, Radiology imagingService) {
+        Location technicianLocation = technician.getLocation();
+
+        // Iterate through the appointments to check if there's a conflict with the same timeslot, location, and imaging service
+        for (Appointment appointment : appointments) {
+            if (appointment instanceof Imaging) {
+                Imaging imagingAppointment = (Imaging) appointment;
+                // Check if the technician is already busy at that timeslot and date
+                if (imagingAppointment.getProvider().equals(technician) &&
+                        imagingAppointment.getDate().equals(date) &&
+                        imagingAppointment.getTimeslot().equals(timeslot)) {
+                    // Conflict: The technician already has an appointment with the same service at the same timeslot
+                    return false;
+                }
+                // Check if the imaging room for the requested service is already booked at the same location
+                if (imagingAppointment.getRoom().equals(imagingService) &&
+                        imagingAppointment.getProvider().getLocation().equals(technicianLocation) &&
+                        imagingAppointment.getDate().equals(date) &&
+                        imagingAppointment.getTimeslot().equals(timeslot)) {
+                    // Conflict: The room for the imaging service is already booked at the same location and timeslot
+                    return false;
+                }
+            }
+        }
+        // If no conflicts were found, the technician is available
+        return true;
+    }
+
+
+
+
     /**
      *  Determines whether date is valid
      * @param dateString input string
@@ -233,6 +364,7 @@ public class HelloController implements Initializable {
         }
         return thisDate;
     }
+
     /**
      * Searches list to find same person
      * @param appointments List to be serached
@@ -302,6 +434,5 @@ public class HelloController implements Initializable {
     void clear(){
         output.clear();
     }
-
 
 }
