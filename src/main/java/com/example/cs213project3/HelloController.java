@@ -40,7 +40,7 @@ public class HelloController implements Initializable {
 
     private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
-    private final String[] imagingServ = {"catscan", "ultrasound", "xray"};
+    private final String[] imagingServ = {"Choose Imaging Service", "catscan", "ultrasound", "xray"};
 
     private int technicianRotationIndex = 0;
 
@@ -287,7 +287,6 @@ public class HelloController implements Initializable {
 
     /**
      * Checks if a technician is available for a given date, timeslot, and imaging service.
-     *
      * @param technician the technician to check.
      * @param date the date of the appointment.
      * @param timeslot the timeslot of the appointment.
@@ -322,7 +321,46 @@ public class HelloController implements Initializable {
         return true;
     }
 
+    /**
+     * Cancels an appointment.
+     */
+    @FXML
+    private void cancelAppointment(){
+        String dateString = date.getValue().toString();
+        String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
+        String firstName = fname.getText();
+        String lastName = lname.getText();
+        String dobString = dob.getValue().toString();
+        Date date = dateisValid(dateString);
+        if (date == null) return;
+        Timeslot timeslot = getTimeslotFromString(timeSlotString);
+        if (timeslot == null) {output.appendText(timeSlotString + " is not a valid time slot.\n");return;}
+        Date dob = birthDateisValid(dobString);
+        if (dob == null) return;
+        Patient patient = new Patient(firstName, lastName, dob);
+        // Find and remove appointment from the appointments list
+        boolean cancelled = removeAppointment(appointments, date, patient, timeslot);
+        if (!cancelled) {
+            output.appendText(dateString + " " + timeslot + " " + patient.getName() + " " + dobString + " - appointment does not exist.");
+        } else {
+            output.appendText(dateString + " " + timeslot + " " + patient.getName().toUpperCase() + " " + dob + " - appointment has been cancelled.");
+        }
+    }
 
+    /**
+     * Removes an appointment from the given list.
+     */
+    private boolean removeAppointment(List<Appointment> appointments, Date date, Patient patient, Timeslot timeslot) {
+        for (Appointment appointment : appointments) {
+            if (appointment.getDate().equals(date) &&
+                    appointment.getPatient().equals(patient) &&
+                    appointment.getTimeslot().equals(timeslot)) {
+                appointments.remove(appointment); // Remove the appointment directly
+                return true; // Appointment removed
+            }
+        }
+        return false; // Appointment not found
+    }
 
 
     /**
