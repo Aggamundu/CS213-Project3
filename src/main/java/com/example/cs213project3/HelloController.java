@@ -4,7 +4,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URL;
@@ -20,15 +19,27 @@ public class HelloController implements Initializable {
     @FXML
     private TextArea output;
     @FXML
-    private TextField fname;
+    private TextField fnameSchedule;
     @FXML
-    private TextField lname;
+    private TextField lnameSchedule;
+    @FXML
+    private TextField fnameReschedule;
+    @FXML
+    private TextField lnameReschedule;
     @FXML
     private DatePicker date;
     @FXML
+    private DatePicker rescheduleDate;
+    @FXML
     private DatePicker dob;
     @FXML
+    private DatePicker dobReschedule;
+    @FXML
     private ChoiceBox timeslotBox;
+    @FXML
+    private ChoiceBox rescheduletimeslotBox;
+    @FXML
+    private ChoiceBox newtimeslotBox;
     @FXML
     private ChoiceBox providerBox;
     @FXML
@@ -37,6 +48,8 @@ public class HelloController implements Initializable {
     private Button scheduleButton;
     @FXML
     private ChoiceBox imagingBox;
+    @FXML
+    private Button cancelButton;
 
     private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
@@ -198,8 +211,8 @@ public class HelloController implements Initializable {
     private void scheduleDoctorAppointment() {
         String dateString = date.getValue().toString();
         String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
-        String firstName = fname.getText();
-        String lastName = lname.getText();
+        String firstName = fnameSchedule.getText();
+        String lastName = lnameSchedule.getText();
         String dobString = dob.getValue().toString();
         String prov = (String) providerBox.getValue();
         String[] sArr = prov.split(" ");
@@ -237,8 +250,8 @@ public class HelloController implements Initializable {
   private void scheduleImagingAppointment() {
       String dateString = date.getValue().toString();
       String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
-      String firstName = fname.getText();
-      String lastName = lname.getText();
+      String firstName = fnameSchedule.getText();
+      String lastName = lnameSchedule.getText();
       String dobString = dob.getValue().toString();
       String imagingString = (String) imagingBox.getValue();
       Date date = dateisValid(dateString);
@@ -328,8 +341,8 @@ public class HelloController implements Initializable {
     private void cancelAppointment(){
         String dateString = date.getValue().toString();
         String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
-        String firstName = fname.getText();
-        String lastName = lname.getText();
+        String firstName = fnameSchedule.getText();
+        String lastName = lnameSchedule.getText();
         String dobString = dob.getValue().toString();
         Date date = dateisValid(dateString);
         if (date == null) return;
@@ -361,6 +374,8 @@ public class HelloController implements Initializable {
         }
         return false; // Appointment not found
     }
+
+
 
 
     /**

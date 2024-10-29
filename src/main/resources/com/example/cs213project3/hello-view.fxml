@@ -28,7 +28,7 @@
                 <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="291.0" prefWidth="625.0">
                         <children>
-                            <GridPane layoutX="-15.0" layoutY="5.0" prefHeight="206.0" prefWidth="625.0" style="-fx-background-color: lightgrey;">
+                            <GridPane layoutX="14.0" layoutY="5.0" prefHeight="206.0" prefWidth="625.0" style="-fx-background-color: lightgrey;">
                                 <columnConstraints>
                                     <ColumnConstraints hgrow="SOMETIMES" maxWidth="169.0" minWidth="10.0" prefWidth="109.0" />
                                     <ColumnConstraints hgrow="SOMETIMES" maxWidth="242.0" minWidth="10.0" prefWidth="196.0" />
@@ -44,14 +44,14 @@
                                 <children>
                                     <Label text="Appointment Date" GridPane.halignment="CENTER" />
                                     <DatePicker fx:id="date" promptText="Enter Date" GridPane.columnIndex="1" />
-                                    <TextField fx:id="lname" promptText="last name" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    <TextField fx:id="fname" prefHeight="0.0" prefWidth="53.0" promptText="first name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    <DatePicker fx:id="dob" promptText="date of birth" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <TextField fx:id="lnameSchedule" promptText="last name" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                    <TextField fx:id="fnameSchedule" prefHeight="0.0" prefWidth="53.0" promptText="first name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                    <DatePicker fx:id="dobSchedule" promptText="date of birth" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                                     <Label text="Patient" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
                                     <HBox alignment="CENTER" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="4" GridPane.valignment="CENTER">
                                         <children>
                                             <Button fx:id="scheduleButton" mnemonicParsing="false" onAction="#handleSchedule" text="Schedule" />
-                                            <Button mnemonicParsing="false" text="Cancel" />
+                                            <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#cancelAppointment" text="Cancel" />
                                         </children>
                                     </HBox>
                                     <HBox alignment="CENTER" prefHeight="41.0" prefWidth="240.0" GridPane.columnIndex="2" GridPane.rowIndex="2">
@@ -87,9 +87,38 @@
                     </AnchorPane>
                 </content>
             </Tab>
-            <Tab text="Reschedule">
+            <Tab fx:id="rescheduleDate" text="Reschedule">
                 <content>
-                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="170.0" prefWidth="512.0" />
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="170.0" prefWidth="512.0">
+                  <children>
+                     <GridPane fx:id="rescheduleDate" prefHeight="214.0" prefWidth="606.0">
+                       <columnConstraints>
+                           <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                       </columnConstraints>
+                       <rowConstraints>
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                       </rowConstraints>
+                        <children>
+                           <Label text="Appointment Date" />
+                           <DatePicker fx:id="rescheduleDate" prefHeight="27.0" prefWidth="205.0" promptText="Enter old Date" GridPane.columnIndex="1" />
+                           <Label text="Name" GridPane.rowIndex="2" />
+                           <TextField fx:id="fnameReschedule" promptText="First Name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                           <TextField fx:id="lnameReschedule" promptText="Last Name" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                           <TextField fx:id="dobReschedule" promptText="Date" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                           <Button fx:id="Reschedule" mnemonicParsing="false" text="Reschedule" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                           <Label text="Old Timeslot" GridPane.columnIndex="2" />
+                           <Label text="New Timeslot " GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                           <ChoiceBox fx:id="rescheduletimeslotBox" prefWidth="150.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                           <ChoiceBox fx:id="newtimeslotBox" prefWidth="150.0" GridPane.columnIndex="2" GridPane.rowIndex="3" />
+                        </children>
+                     </GridPane>
+                  </children></AnchorPane>
                 </content>
             </Tab>
             <Tab text="Clinic Locations">
@@ -104,5 +133,5 @@
             </Tab>
         </tabs>
     </TabPane>
-    <TextArea fx:id="output" prefHeight="259.0" prefWidth="625.0" />
+    <TextArea fx:id="rescheduleDate" prefHeight="259.0" prefWidth="625.0" />
 </VBox>
