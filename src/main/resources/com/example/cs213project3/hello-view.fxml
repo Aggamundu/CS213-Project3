@@ -111,7 +111,7 @@
                            <TextField fx:id="fnameReschedule" promptText="First Name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                            <TextField fx:id="lnameReschedule" promptText="Last Name" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                            <TextField fx:id="dobReschedule" promptText="Date" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                           <Button fx:id="Reschedule" mnemonicParsing="false" text="Reschedule" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                           <Button fx:id="rescheduleButton" mnemonicParsing="false" onAction="#rescheduleAppointment" text="Reschedule" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                            <Label text="Old Timeslot" GridPane.columnIndex="2" />
                            <Label text="New Timeslot " GridPane.columnIndex="2" GridPane.rowIndex="2" />
                            <ChoiceBox fx:id="rescheduletimeslotBox" prefWidth="150.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />

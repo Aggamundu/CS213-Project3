@@ -50,6 +50,8 @@ public class HelloController implements Initializable {
     private ChoiceBox imagingBox;
     @FXML
     private Button cancelButton;
+    @FXML
+    private Button rescheduleButton;
 
     private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
@@ -376,6 +378,55 @@ public class HelloController implements Initializable {
     }
 
 
+    @FXML
+    private void rescheduleAppointment() {
+        String dateString = rescheduleDate.getValue().toString();
+        String timeSlotString = String.valueOf(rescheduletimeslotBox.getSelectionModel().getSelectedIndex());
+        String firstName = fnameReschedule.getText();
+        String lastName = lnameReschedule.getText();
+        String dobString = dobReschedule.getValue().toString();
+        String rescheduleTimeSlotString = String.valueOf(newtimeslotBox.getSelectionModel().getSelectedIndex());
+        Date date = dateisValid(dateString);
+        if (date == null) return;
+        Timeslot timeslot = getTimeslotFromString(timeSlotString);
+        if (timeslot == null) {
+            output.appendText(timeSlotString + " is not a valid time slot.");
+            return;
+        }
+        Date dob = birthDateisValid(dobString);
+        if (dob == null) return;
+        Patient patient = new Patient(firstName, lastName, dob);
+        Timeslot rescheduletimeslot = getTimeslotFromString(rescheduleTimeSlotString);
+        if (rescheduletimeslot == null) {
+            output.appendText(timeSlotString + " is not a valid time slot.");
+            return;
+        }
+        //Before removing appointment you want to get the data so you can make a Doctor object
+        // Capture doctor info before removing the appointment
+        Doctor doctor = null;
+        for (Appointment appointment : appointments) {
+            if (appointment.getPatient().equals(patient) &&
+                    appointment.getDate().equals(date) &&
+                    appointment.getTimeslot().equals(timeslot) &&
+                    appointment.getProvider() instanceof Doctor) {
+                doctor = (Doctor) appointment.getProvider(); // Extract the Doctor object
+                break;
+            }
+        }
+        if (doctor == null) {System.out.println("Doctor not found for the given appointment.");return;}
+        // Find and remove appointment from the appointments list
+        boolean cancelled = removeAppointment(appointments, date, patient, timeslot);
+        if (!cancelled) {output.appendText(date + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dobString + " does not exist.");return;
+        }
+        for (Appointment appointment : appointments) {
+            if (appointment.getDate().equals(date) &&
+                    appointment.getTimeslot().equals(rescheduletimeslot)) {
+                output.appendText(appointment.getPatient().getName() + " " + dob + " has an existing appointment at " + dateString + " " + rescheduletimeslot);
+                return;
+            }
+        }
+        output.appendText("Rescheduled to " + dateString + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString());
+    }
 
 
     /**
