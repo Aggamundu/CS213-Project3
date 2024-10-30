@@ -46,7 +46,7 @@
                                     <DatePicker fx:id="date" promptText="Enter Date" GridPane.columnIndex="1" />
                                     <TextField fx:id="lnameSchedule" promptText="last name" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                                     <TextField fx:id="fnameSchedule" prefHeight="0.0" prefWidth="53.0" promptText="first name" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                                    <DatePicker fx:id="dobSchedule" promptText="date of birth" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                    <DatePicker fx:id="dob" promptText="date of birth" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                                     <Label text="Patient" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
                                     <HBox alignment="CENTER" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="4" GridPane.valignment="CENTER">
                                         <children>
@@ -115,7 +115,7 @@
                            <Label text="New Timeslot " GridPane.columnIndex="2" GridPane.rowIndex="2" />
                            <ChoiceBox fx:id="rescheduletimeslotBox" prefWidth="150.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                            <ChoiceBox fx:id="newtimeslotBox" prefWidth="150.0" GridPane.columnIndex="2" GridPane.rowIndex="3" />
-                           <DatePicker fx:id="dobReschedule" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                           <DatePicker fx:id="dobReschedule" promptText="Patient date of birth" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                         </children>
                      </GridPane>
                   </children></AnchorPane>
@@ -133,5 +133,5 @@
             </Tab>
         </tabs>
     </TabPane>
-    <TextArea prefHeight="259.0" prefWidth="625.0" />
+    <TextArea fx:id="output" prefHeight="259.0" prefWidth="625.0" />
 </VBox>

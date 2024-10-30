@@ -53,6 +53,7 @@ public class HelloController implements Initializable {
     @FXML
     private Button rescheduleButton;
 
+
     private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
     private final String[] imagingServ = {"Choose Imaging Service", "catscan", "ultrasound", "xray"};
@@ -69,10 +70,15 @@ public class HelloController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         timeslotBox.getItems().addAll(timeslots);
         timeslotBox.getSelectionModel().selectFirst();
+        rescheduletimeslotBox.getItems().addAll(timeslots);
+        rescheduletimeslotBox.getSelectionModel().selectFirst();
+        newtimeslotBox.getItems().addAll(timeslots);
+        newtimeslotBox.getSelectionModel().selectFirst();
         providerBox.getItems().addAll(providersArr);
         providerBox.getSelectionModel().selectFirst();
         imagingBox.getItems().addAll(imagingServ);
         imagingBox.getSelectionModel().selectFirst();
+        loadProviders();
     }
 
     /**
@@ -82,9 +88,11 @@ public class HelloController implements Initializable {
     void disableProviders(){
         if(imagingButton.isSelected()){
             providerBox.setDisable(true);
+            imagingBox.setDisable(false);
         }
         if(officeButton.isSelected()){
             providerBox.setDisable(false);
+            imagingBox.setDisable(true);
         }
     }
 
@@ -198,11 +206,12 @@ public class HelloController implements Initializable {
 
     @FXML
     private void handleSchedule() {
-        if(imagingButton.isSelected()){
+        if (imagingButton.isSelected()) {
             scheduleImagingAppointment();
-        }
-        if(officeButton.isSelected()){
-            scheduleDoctorAppointment();;
+        } else if (officeButton.isSelected()) {
+            scheduleDoctorAppointment();
+        } else {
+            output.appendText("Please select either Imaging or Office appointment.\n");
         }
     }
 
@@ -211,11 +220,16 @@ public class HelloController implements Initializable {
      */
     @FXML
     private void scheduleDoctorAppointment() {
-        String dateString = date.getValue().toString();
-        String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
+        String dateString = date.getValue() != null ? date.getValue().toString() : "Appointment Date not selected";
+        String timeSlotString = timeslotBox.getSelectionModel().getSelectedIndex() >= 0
+                ? String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex())
+                : "No time slot selected";
         String firstName = fnameSchedule.getText();
         String lastName = lnameSchedule.getText();
-        String dobString = dob.getValue().toString();
+        if (firstName.isEmpty()) {output.appendText("First name is required\n");return;}
+        if (lastName.isEmpty()) {output.appendText("Last name is required\n");return;}
+        String dobString = dob.getValue() != null ? dob.getValue().toString() : "Birth Date not selected";
+        if (providerBox.getSelectionModel().isEmpty()) {output.appendText("No provider has been selected");return;}
         String prov = (String) providerBox.getValue();
         String[] sArr = prov.split(" ");
         String npiString = sArr[2].substring(1,3);
@@ -233,8 +247,7 @@ public class HelloController implements Initializable {
         // Check for existing appointments
         if (containsSamePerson(appointments, patient, date, timeslot) != null) {
             Person person = containsSamePerson(appointments, patient, date, timeslot);
-            output.appendText(person.getFirstName() + " " + person.getLastName() + " " + person.getDob() + " has an existing appointment at the same time slot.\n");
-            return;}
+            output.appendText(person.getFirstName() + " " + person.getLastName() + " " + person.getDob() + " has an existing appointment at the same time slot.\n");return;}
         // Check doctor's availability
         for (Appointment appointment : appointments) {
             if (appointment.getDate().equals(date) && appointment.getProvider().equals(doctor) && appointment.getTimeslot().equals(timeslot)) {output.appendText(doctor.toString() + " is not available at slot " + timeSlotString + ".\n");return;}
@@ -243,6 +256,7 @@ public class HelloController implements Initializable {
         Appointment officeAppointment = new Appointment(date, timeslot, patient, doctor);
         appointments.add(officeAppointment);
         output.appendText(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.\n");
+        System.out.println(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.\n");
     }
 
     /**
@@ -250,11 +264,15 @@ public class HelloController implements Initializable {
      */
   @FXML
   private void scheduleImagingAppointment() {
-      String dateString = date.getValue().toString();
-      String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
+      String dateString = date.getValue() != null ? date.getValue().toString() : "Date not selected";
+      String timeSlotString = timeslotBox.getSelectionModel().getSelectedIndex() >= 0
+              ? String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex())
+              : "No time slot selected";
       String firstName = fnameSchedule.getText();
       String lastName = lnameSchedule.getText();
-      String dobString = dob.getValue().toString();
+      if (firstName.isEmpty()) {output.appendText("First name is required\n");return;}
+      if (lastName.isEmpty()) {output.appendText("Last name is required\n");return;}
+      String dobString = dob.getValue() != null ? dob.getValue().toString() : "Birth Date not selected";
       String imagingString = (String) imagingBox.getValue();
       Date date = dateisValid(dateString);
       if (date == null) return;
@@ -337,15 +355,19 @@ public class HelloController implements Initializable {
     }
 
     /**
-     * Cancels an appointment.
+     * Cancels an appointment that currently exists.
      */
     @FXML
     private void cancelAppointment(){
-        String dateString = date.getValue().toString();
-        String timeSlotString = String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex());
+        String dateString = date.getValue() != null ? date.getValue().toString() : "Date not selected";
+        String timeSlotString = timeslotBox.getSelectionModel().getSelectedIndex() >= 0
+                ? String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex())
+                : "No time slot selected";
         String firstName = fnameSchedule.getText();
         String lastName = lnameSchedule.getText();
-        String dobString = dob.getValue().toString();
+        if (firstName.isEmpty()) {output.appendText("First name is required\n");return;}
+        if (lastName.isEmpty()) {output.appendText("Last name is required\n");return;}
+        String dobString = dob.getValue() != null ? dob.getValue().toString() : "Birth Date not selected";
         Date date = dateisValid(dateString);
         if (date == null) return;
         Timeslot timeslot = getTimeslotFromString(timeSlotString);
@@ -377,15 +399,23 @@ public class HelloController implements Initializable {
         return false; // Appointment not found
     }
 
-
+    /**
+     * Reschedules an existing appointment to a diifferent time.
+     */
     @FXML
     private void rescheduleAppointment() {
-        String dateString = rescheduleDate.getValue().toString();
-        String timeSlotString = String.valueOf(rescheduletimeslotBox.getSelectionModel().getSelectedIndex());
+        String dateString = date.getValue() != null ? date.getValue().toString() : "Date not selected";
+        String timeSlotString = timeslotBox.getSelectionModel().getSelectedIndex() >= 0
+                ? String.valueOf(rescheduletimeslotBox.getSelectionModel().getSelectedIndex())
+                : "No time slot selected";
         String firstName = fnameReschedule.getText();
         String lastName = lnameReschedule.getText();
-        String dobString = dobReschedule.getValue().toString();
-        String rescheduleTimeSlotString = String.valueOf(newtimeslotBox.getSelectionModel().getSelectedIndex());
+        if (firstName.isEmpty()) {output.appendText("First name is required\n");return;}
+        if (lastName.isEmpty()) {output.appendText("Last name is required\n");return;}
+        String dobString = dob.getValue() != null ? dob.getValue().toString() : "Birth Date not selected";
+        String rescheduleTimeSlotString = timeslotBox.getSelectionModel().getSelectedIndex() >= 0
+                ? String.valueOf(newtimeslotBox.getSelectionModel().getSelectedIndex())
+                : "No time slot selected";
         Date date = dateisValid(dateString);
         if (date == null) return;
         Timeslot timeslot = getTimeslotFromString(timeSlotString);
@@ -416,8 +446,7 @@ public class HelloController implements Initializable {
         if (doctor == null) {System.out.println("Doctor not found for the given appointment.");return;}
         // Find and remove appointment from the appointments list
         boolean cancelled = removeAppointment(appointments, date, patient, timeslot);
-        if (!cancelled) {output.appendText(date + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dobString + " does not exist.");return;
-        }
+        if (!cancelled) {output.appendText(date + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dobString + " does not exist.");return;}
         for (Appointment appointment : appointments) {
             if (appointment.getDate().equals(date) &&
                     appointment.getTimeslot().equals(rescheduletimeslot)) {
@@ -447,7 +476,6 @@ public class HelloController implements Initializable {
         today.set(Calendar.MINUTE, 0);
         today.set(Calendar.SECOND, 0);
         today.set(Calendar.MILLISECOND, 0);
-
         // Validations for date
         if (!thisDate.isValid()) {
             output.appendText("Appointment date: " + dateString + " is not a valid calendar date.\n");
@@ -534,9 +562,11 @@ public class HelloController implements Initializable {
         return thisDate;
     }
 
+    /**
+     * Clears all the current information in the text box.
+     */
     @FXML
     void clear(){
         output.clear();
     }
-
 }
