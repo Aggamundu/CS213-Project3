@@ -25,7 +25,5 @@ public class ClinicManagerMain extends Application{
         Scene scene = new Scene(root);    // Use root as the parent node in your scene
         stage.setScene(scene);
         stage.show();
-
     }
-
 }
