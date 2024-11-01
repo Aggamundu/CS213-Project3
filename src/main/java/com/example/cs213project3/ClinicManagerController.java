@@ -1,8 +1,11 @@
 package com.example.cs213project3;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -12,7 +15,7 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 
 
-public class HelloController implements Initializable {
+public class ClinicManagerController implements Initializable {
     private static List<Provider> providers = new List<>(); // Single list for all providers
     private static List<Appointment> appointments = new List<>(); // Single list for both office and imaging appointments
     private static List<Technician> technicians = new List<>();
@@ -52,13 +55,21 @@ public class HelloController implements Initializable {
     private Button cancelButton;
     @FXML
     private Button rescheduleButton;
+    @FXML
+    private TableView tbl_location;
+    @FXML
+    private TableColumn<Location, String> col_zip, col_county;
+    @FXML
+    private ToggleGroup visitType;
 
 
     private final String[] timeslots = {"Pick Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private final String[] providersArr = {"Choose Provider","JUSTIN CERAVOLO (09)", "JOHN HARPER (32)","BEN JERRY (77)","GARY JOHNSON (85)","TOM KAUR (54)", "RACHAEL LIM (23)" ,"ANDREW PATEL (01)","BEN RAMESH (39)","ERIC TAYLOR (91)","MONICA ZIMNES (11)"};
     private final String[] imagingServ = {"Choose Imaging Service", "catscan", "ultrasound", "xray"};
-
+    private final String[] oldTimeslots = {"Old Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
+    private final String[] newTimeslots = {"New Timeslot","9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM"};
     private int technicianRotationIndex = 0;
+
 
 
     /**
@@ -68,17 +79,70 @@ public class HelloController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        scheduleButton.setDisable(true);
+        fnameSchedule.textProperty().addListener((observable,oldValue,newValue)->checkFields());
+        lnameSchedule.textProperty().addListener((observable,oldValue,newValue)->checkFields());
+        date.valueProperty().addListener((observable,oldValue,newValue)->checkFields());
+        dob.valueProperty().addListener((observable,oldValue,newValue)->checkFields());
+        timeslotBox.getSelectionModel().selectedItemProperty().addListener((observable,oldValue,newValue)->checkFields());
+        imagingBox.getSelectionModel().selectedItemProperty().addListener((observable,oldValue,newValue)->checkFields());
+        providerBox.getSelectionModel().selectedItemProperty().addListener((observable,oldValue,newValue)->checkFields());
+        visitType.selectedToggleProperty().addListener((observable,oldValue,newValue)->checkFields());
+
+        rescheduleButton.setDisable(true);
+        fnameReschedule.textProperty().addListener((observable,oldValue,newValue)->checkFieldsReschedule());
+        lnameReschedule.textProperty().addListener((observable,oldValue,newValue)->checkFieldsReschedule());
+        rescheduleDate.valueProperty().addListener((observable,oldValue,newValue)->checkFieldsReschedule());
+        dobReschedule.valueProperty().addListener((observable,oldValue,newValue)->checkFieldsReschedule());
+        newtimeslotBox.getSelectionModel().selectedItemProperty().addListener((observable,oldValue,newValue)->checkFieldsReschedule());
+        rescheduletimeslotBox.getSelectionModel().selectedItemProperty().addListener((observable,oldValue,newValue)->checkFieldsReschedule());
+
+
+
         timeslotBox.getItems().addAll(timeslots);
         timeslotBox.getSelectionModel().selectFirst();
-        rescheduletimeslotBox.getItems().addAll(timeslots);
+        rescheduletimeslotBox.getItems().addAll(oldTimeslots);
         rescheduletimeslotBox.getSelectionModel().selectFirst();
-        newtimeslotBox.getItems().addAll(timeslots);
+        newtimeslotBox.getItems().addAll(newTimeslots);
         newtimeslotBox.getSelectionModel().selectFirst();
         providerBox.getItems().addAll(providersArr);
         providerBox.getSelectionModel().selectFirst();
         imagingBox.getItems().addAll(imagingServ);
         imagingBox.getSelectionModel().selectFirst();
+
+        ObservableList<Location> locations = FXCollections.observableArrayList(Location.values());
+        tbl_location.setItems(locations);
+        col_county.setCellValueFactory(new PropertyValueFactory<>("county"));
+        col_zip.setCellValueFactory(new PropertyValueFactory<>("zip"));
+
         loadProviders();
+    }
+
+    /**
+     * disables schedule unless all fields are filled
+     */
+    private void checkFields(){
+        boolean fieldsFilled = !fnameSchedule.getText().trim().isEmpty()
+                && !lnameSchedule.getText().trim().isEmpty()
+                && date.getValue()!=null
+                && dob.getValue()!=null
+                && timeslotBox.getSelectionModel().getSelectedIndex()>0
+                && (imagingBox.getSelectionModel().getSelectedIndex()>0||providerBox.getSelectionModel().getSelectedIndex()>0)
+                && visitType.getSelectedToggle()!=null;
+        scheduleButton.setDisable(!fieldsFilled);
+    }
+
+    /**
+     * disable reschedule unless all fields are filled
+     */
+    private void checkFieldsReschedule(){
+        boolean fieldsFilled = !fnameReschedule.getText().trim().isEmpty()
+                && !lnameReschedule.getText().trim().isEmpty()
+                && rescheduleDate.getValue()!=null
+                && dobReschedule.getValue()!=null
+                && newtimeslotBox.getSelectionModel().getSelectedIndex()>0
+                && rescheduletimeslotBox.getSelectionModel().getSelectedIndex()>0;
+        rescheduleButton.setDisable(!fieldsFilled);
     }
 
     /**
@@ -226,8 +290,6 @@ public class HelloController implements Initializable {
                 : "No time slot selected";
         String firstName = fnameSchedule.getText();
         String lastName = lnameSchedule.getText();
-        if (firstName.isEmpty()) {output.appendText("First name is required\n");return;}
-        if (lastName.isEmpty()) {output.appendText("Last name is required\n");return;}
         String dobString = dob.getValue() != null ? dob.getValue().toString() : "Birth Date not selected";
         if (providerBox.getSelectionModel().isEmpty()) {output.appendText("No provider has been selected");return;}
         String prov = (String) providerBox.getValue();
@@ -256,67 +318,66 @@ public class HelloController implements Initializable {
         Appointment officeAppointment = new Appointment(date, timeslot, patient, doctor);
         appointments.add(officeAppointment);
         output.appendText(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.\n");
-        System.out.println(date + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + " booked.\n");
     }
 
     /**
      * Schedules a imaging appointment.
      */
-  @FXML
-  private void scheduleImagingAppointment() {
-      String dateString = date.getValue() != null ? date.getValue().toString() : "Date not selected";
-      String timeSlotString = timeslotBox.getSelectionModel().getSelectedIndex() >= 0
-              ? String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex())
-              : "No time slot selected";
-      String firstName = fnameSchedule.getText();
-      String lastName = lnameSchedule.getText();
-      if (firstName.isEmpty()) {output.appendText("First name is required\n");return;}
-      if (lastName.isEmpty()) {output.appendText("Last name is required\n");return;}
-      String dobString = dob.getValue() != null ? dob.getValue().toString() : "Birth Date not selected";
-      String imagingString = (String) imagingBox.getValue();
-      Date date = dateisValid(dateString);
-      if (date == null) return;
-      Timeslot timeslot = getTimeslotFromString(timeSlotString);
-      if (timeslot == null) {output.appendText(timeSlotString + " is not a valid time slot.\n");return;}
-      Date dob = birthDateisValid(dobString);
-      if (dob == null) return;
-      Patient patient = new Patient(firstName, lastName, dob);
-      //Validate the imaging Service
-      Radiology imagingService;
-      try {imagingService = Radiology.valueOf(imagingString.toUpperCase());}
-      catch (IllegalArgumentException e) {
-          output.appendText(imagingString + " - imaging service not provided.");
-          return;
-      }
-      // Check for existing appointments for the patient
-      if (containsSamePerson(appointments, patient, date, timeslot) != null) {
-          output.appendText(firstName + " " + lastName + " " + dobString + " has an existing appointment at the same time slot.");
-          return;
-      }
-      // Circular rotation logic to find the next available technician
-      int checkedTechnicians = 0;
-      Technician selectedTechnician = null;
-      while (checkedTechnicians < technicians.size()) {
-          Technician currentTechnician = technicians.get(technicianRotationIndex);
-          // Check if the technician is available at the requested timeslot and location
-          boolean isAvailable = checkTechnicianAvailability(currentTechnician, date, timeslot, imagingService);
-          if (isAvailable) {selectedTechnician = currentTechnician;break;} // Found an available technician
-          // Move to the next technician in the circular rotation
-          technicianRotationIndex = (technicianRotationIndex + 1) % technicians.size();
-          checkedTechnicians++;
-      }
-      // If no technician is found, output a message
-      if (selectedTechnician == null) {
-          output.appendText("Cannot find an available technician at all locations for " + imagingService + " at slot " + timeSlotString + ".");
-          return;
-      }
-      // Create the imaging appointment
-      Imaging imagingAppointment = new Imaging(date, timeslot, patient, selectedTechnician, imagingService);
-      appointments.add(imagingAppointment);
-      output.appendText(dateString + " " + timeslot + " " + firstName + " " + lastName + " " + dobString + " " + selectedTechnician.toString() + "[" + imagingString.toUpperCase() +  "] booked.");
-      // Move the rotation to the next technician for future appointments
-      technicianRotationIndex = (technicianRotationIndex + 1) % technicians.size();
-  }
+    @FXML
+    private void scheduleImagingAppointment() {
+        String dateString = date.getValue() != null ? date.getValue().toString() : "Date not selected";
+        String timeSlotString = timeslotBox.getSelectionModel().getSelectedIndex() >= 0
+                ? String.valueOf(timeslotBox.getSelectionModel().getSelectedIndex())
+                : "No time slot selected";
+        String firstName = fnameSchedule.getText();
+        String lastName = lnameSchedule.getText();
+        if (firstName.isEmpty()) {output.appendText("First name is required\n");return;}
+        if (lastName.isEmpty()) {output.appendText("Last name is required\n");return;}
+        String dobString = dob.getValue() != null ? dob.getValue().toString() : "Birth Date not selected";
+        String imagingString = (String) imagingBox.getValue();
+        Date date = dateisValid(dateString);
+        if (date == null) return;
+        Timeslot timeslot = getTimeslotFromString(timeSlotString);
+        if (timeslot == null) {output.appendText(timeSlotString + " is not a valid time slot.\n");return;}
+        Date dob = birthDateisValid(dobString);
+        if (dob == null) return;
+        Patient patient = new Patient(firstName, lastName, dob);
+        //Validate the imaging Service
+        Radiology imagingService;
+        try {imagingService = Radiology.valueOf(imagingString.toUpperCase());}
+        catch (IllegalArgumentException e) {
+            output.appendText(imagingString + " - imaging service not provided.");
+            return;
+        }
+        // Check for existing appointments for the patient
+        if (containsSamePerson(appointments, patient, date, timeslot) != null) {
+            output.appendText(firstName + " " + lastName + " " + dobString + " has an existing appointment at the same time slot.\n");
+            return;
+        }
+        // Circular rotation logic to find the next available technician
+        int checkedTechnicians = 0;
+        Technician selectedTechnician = null;
+        while (checkedTechnicians < technicians.size()) {
+            Technician currentTechnician = technicians.get(technicianRotationIndex);
+            // Check if the technician is available at the requested timeslot and location
+            boolean isAvailable = checkTechnicianAvailability(currentTechnician, date, timeslot, imagingService);
+            if (isAvailable) {selectedTechnician = currentTechnician;break;} // Found an available technician
+            // Move to the next technician in the circular rotation
+            technicianRotationIndex = (technicianRotationIndex + 1) % technicians.size();
+            checkedTechnicians++;
+        }
+        // If no technician is found, output a message
+        if (selectedTechnician == null) {
+            output.appendText("Cannot find an available technician at all locations for " + imagingService + " at slot " + timeSlotString + ".\n ");
+            return;
+        }
+        // Create the imaging appointment
+        Imaging imagingAppointment = new Imaging(date, timeslot, patient, selectedTechnician, imagingService);
+        appointments.add(imagingAppointment);
+        output.appendText(dateString + " " + timeslot + " " + firstName + " " + lastName + " " + dobString + " " + selectedTechnician.toString() + "[" + imagingString.toUpperCase() +  "] booked.\n");
+        // Move the rotation to the next technician for future appointments
+        technicianRotationIndex = (technicianRotationIndex + 1) % technicians.size();
+    }
 
     /**
      * Checks if a technician is available for a given date, timeslot, and imaging service.
@@ -378,9 +439,9 @@ public class HelloController implements Initializable {
         // Find and remove appointment from the appointments list
         boolean cancelled = removeAppointment(appointments, date, patient, timeslot);
         if (!cancelled) {
-            output.appendText(dateString + " " + timeslot + " " + patient.getName() + " " + dobString + " - appointment does not exist.");
+            output.appendText(dateString + " " + timeslot + " " + patient.getName() + " " + dobString + " - appointment does not exist.\n");
         } else {
-            output.appendText(dateString + " " + timeslot + " " + patient.getName().toUpperCase() + " " + dob + " - appointment has been cancelled.");
+            output.appendText(dateString + " " + timeslot + " " + patient.getName().toUpperCase() + " " + dob + " - appointment has been canceled.\n");
         }
     }
 
@@ -419,44 +480,54 @@ public class HelloController implements Initializable {
         Date date = dateisValid(dateString);
         if (date == null) return;
         Timeslot timeslot = getTimeslotFromString(timeSlotString);
-        if (timeslot == null) {
-            output.appendText(timeSlotString + " is not a valid time slot.");
-            return;
-        }
+        if (timeslot == null) {output.appendText(timeSlotString + " is not a valid time slot.");return;}
         Date dob = birthDateisValid(dobString);
         if (dob == null) return;
         Patient patient = new Patient(firstName, lastName, dob);
         Timeslot rescheduletimeslot = getTimeslotFromString(rescheduleTimeSlotString);
-        if (rescheduletimeslot == null) {
-            output.appendText(timeSlotString + " is not a valid time slot.");
-            return;
-        }
+        if (rescheduletimeslot == null) {output.appendText(rescheduleTimeSlotString + " is not a valid time slot.\n");return;}
         //Before removing appointment you want to get the data so you can make a Doctor object
         // Capture doctor info before removing the appointment
         Doctor doctor = null;
+        //Technician technician = null;
+        //Radiology room = null;
         for (Appointment appointment : appointments) {
             if (appointment.getPatient().equals(patient) &&
                     appointment.getDate().equals(date) &&
                     appointment.getTimeslot().equals(timeslot) &&
                     appointment.getProvider() instanceof Doctor) {
-                doctor = (Doctor) appointment.getProvider(); // Extract the Doctor object
+                doctor = (Doctor) appointment.getProvider();
                 break;
+
+//                if(appointment.getProvider() instanceof Technician) {
+//                    technician = (Technician) appointment.getProvider();
+//                    room = ((Imaging) appointment).getRoom();
+//                    break;
+//                }
             }
         }
-        if (doctor == null) {System.out.println("Doctor not found for the given appointment.");return;}
+        if (doctor == null) {output.appendText("Doctor not found for the given appointment.");return;}
         // Find and remove appointment from the appointments list
         boolean cancelled = removeAppointment(appointments, date, patient, timeslot);
-        if (!cancelled) {output.appendText(date + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dobString + " does not exist.");return;}
+        if (!cancelled) {output.appendText(date + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dob + " does not exist.\n");return;}
         for (Appointment appointment : appointments) {
             if (appointment.getDate().equals(date) &&
                     appointment.getTimeslot().equals(rescheduletimeslot)) {
-                output.appendText(appointment.getPatient().getName() + " " + dob + " has an existing appointment at " + dateString + " " + rescheduletimeslot);
+                output.appendText(appointment.getPatient().getName() + " " + dob + " has an existing appointment at " + date + " " + rescheduletimeslot);
                 return;
             }
         }
-        output.appendText("Rescheduled to " + dateString + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString());
+//        if(technician==null){
+//            Appointment newAppointment = new Appointment(date,timeslot,patient,doctor);
+//            appointments.add(newAppointment);
+//            output.appendText("Rescheduled to " + dateString + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString() + "\n");
+//        } else {
+//            Imaging newAppointment = new Imaging(date,timeslot,patient,technician,room);
+//            output.appendText("Rescheduled to " + dateString + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dob + " " + technician.toString() + "\n");
+//            appointments.add(newAppointment);
+//        }
+        output.appendText("Rescheduled to " + date + " " + rescheduletimeslot + " " + firstName + " " + lastName + " " + dob + " " + doctor.toString());
     }
-
 
     /**
      *  Determines whether date is valid
@@ -478,24 +549,203 @@ public class HelloController implements Initializable {
         today.set(Calendar.MILLISECOND, 0);
         // Validations for date
         if (!thisDate.isValid()) {
-            output.appendText("Appointment date: " + dateString + " is not a valid calendar date.\n");
+            output.appendText("Appointment date: " + thisDate + " is not a valid calendar date.\n");
             return null;
         }
         if (inputDate.before(today)) {
-            output.appendText("Appointment date: " + dateString + " is today or a date before today.\n");
+            output.appendText("Appointment date: " + thisDate + " is today or a date before today.\n");
             return null;
         }
 
         if (!thisDate.isWeekday()) {
-            output.appendText("Appointment date: " + dateString + " is Saturday or Sunday.");
+            output.appendText("Appointment date: " + thisDate + " is Saturday or Sunday.");
             return null;
         }
         if (!thisDate.isWithinSixMonths()) {
-            output.appendText("Appointment date: " + dateString + " is not within six months.");
+            output.appendText("Appointment date: " + thisDate + " is not within six months.");
             return null;
         }
         return thisDate;
     }
+
+    /**
+     * Displays list of office appointments
+     */
+    @FXML
+    private void displayListOfOfficeAppointments() {
+        if (appointments.isEmpty()) {
+            output.appendText("Schedule calendar is empty.\n");
+            return;
+        }
+        output.appendText("** List of office appointments. **\n");
+
+        // Filter office appointments
+        List<Appointment> officeAppointments = new List<>();
+        for (Appointment appointment : appointments) {
+            if (!(appointment instanceof Imaging)) { // Assuming appointments that are not imaging are office appointments
+                officeAppointments.add(appointment);
+            }
+        }
+
+        // Sort by county, then date, and time
+        Sort.sortAppointmentsByCounty(officeAppointments);
+        for (Appointment appointment : officeAppointments) {
+            output.appendText(appointment+"\n");
+        }
+        output.appendText("** end of list **\n");
+    }
+
+    /**
+     * Display list of imaging appointments
+     */
+    @FXML
+    private void displayListOfImagingAppointments() {
+        if (appointments.isEmpty()) {
+            output.appendText("Schedule calendar is empty.\n");
+            return;
+        }
+        output.appendText("** List of imaging appointments. **\n");
+
+        List<Appointment> imagingAppointments = new List<>();
+        for (Appointment appointment : appointments) {
+            if (appointment instanceof Imaging) { // Check if the appointment is an imaging appointment
+                imagingAppointments.add(appointment);
+            }
+        }
+        Sort.sortAppointmentsByCounty(imagingAppointments);
+        for (Appointment appointment : imagingAppointments) {
+            output.appendText(appointment + "\n");
+        }
+        output.appendText("** end of list **\n");
+    }
+
+    /**
+     * display appointments listed by date
+     */
+    @FXML
+    public void displayAppointmentsByDate() {
+        if (appointments.isEmpty()) {
+            output.appendText("Schedule calendar is empty\n");
+            return;
+        }
+        output.appendText("** List of office appointments, ordered by date/time/provider. **\n");
+
+        // Sort appointments by date, time, then provider's name
+        Sort.sortAppointmentsByDateAndProvider(appointments);
+        for (Appointment appointment : appointments) {
+            output.appendText(appointment+"\n");
+        }
+        output.appendText("** end of list **\n");
+    }
+
+    /**
+     * Display appointments sorted by patient
+     */
+    @FXML
+    private void displayAppointmentsByPatient() {
+        if (appointments.isEmpty()) {
+            output.appendText("Schedule calendar is empty.\n");
+            return;
+        }
+        output.appendText("** List of appointments, ordered by patient. **\n");
+
+        // Sort appointments by patient last name, first name, and then date/time
+        Sort.sortAppointmentsByPatient(appointments);
+        for (Appointment appointment : appointments) {
+            output.appendText(appointment+"\n");
+        }
+        output.appendText("** end of list **\n");
+    }
+
+    /**
+     * Display appointments sorted by location
+     */
+    @FXML
+    private void displayAppointmentsByLocation() {
+        if (appointments.isEmpty()) {
+            output.appendText("Schedule calendar is empty.\n");
+            return;
+        }
+        output.appendText("** List of appointments, ordered by county/date/time.\n");
+
+        // Sort appointments by county, then date, and time
+        Sort.sortAppointmentsByCounty(appointments);
+        for (Appointment appointment : appointments) {
+            output.appendText(appointment+"\n");
+        }
+        output.appendText("** end of list **\n");
+    }
+
+    /**
+     *
+     */
+    @FXML
+    private void billingStatements() {
+        if (appointments.isEmpty()) {
+            output.appendText("Schedule calendar is empty.\n");
+            return;
+        }
+        output.appendText("** Billing statements for all patients. **\n");
+
+        List<Patient> patients = new List<>();
+
+        // Collect unique patients from appointments
+        for (Appointment appointment : appointments) {
+            Patient patient = (Patient) appointment.getPatient();
+            if (!patients.contains(patient)) {
+                patients.add(patient);
+            }
+        }
+        int i = 1;
+        for (Patient patient : patients) {
+            double totalDue = 0.0;
+            for (Appointment appointment : appointments) {
+                if (appointment.getPatient().equals(patient)) {
+                    Provider provider = (Provider) appointment.getProvider(); // Get the provider
+                    if (provider != null) { // Check for null
+                        totalDue += provider.rate(); // Call the rate method
+                    }
+                }
+            }
+            output.appendText(String.format("(%d) %s %s [due: $%.2f]%n\n",i, patient.getFirstName(), patient.getLastName(), totalDue));
+            i++;
+        }
+        output.appendText("** end of list **\n");
+    }
+
+    /**
+     * displays list of expected credit amounts
+     */
+    @FXML
+    private void displayExpectedCreditAmounts() {
+        if (appointments.isEmpty()) {
+            output.appendText("Schedule calendar is empty.\n");
+            return;
+        }
+        output.appendText("** Credit amount ordered by provider. **\n");
+        // Assuming each provider has a rate and can be sorted by their name
+        List<Provider> providers = new List<>();
+        for (Appointment appointment : appointments) {
+            Provider provider = (Provider) appointment.getProvider();
+            if (!providers.contains(provider)) {
+                providers.add(provider);
+            }
+        }
+        // Sort providers by name
+        Sort.sortAppointmentByProvider(providers);
+        // Print credit amounts
+        for (Provider provider : providers) {
+            double totalCredit = 0.0;
+            for (Appointment appointment : appointments) {
+                if (appointment.getProvider().equals(provider)) {
+                    totalCredit += provider.rate(); // Assuming this method returns the provider's rate
+                }
+            }
+            output.appendText(String.format(provider.getFirstName().toUpperCase() +" " + provider.getLastName().toUpperCase()+" "+ provider.getDob()+ " [credit amount: $%.2f]%n\n", totalCredit));
+        }
+        output.appendText("** end of list **\n");
+    }
+
 
     /**
      * Searches list to find same person
@@ -552,11 +802,11 @@ public class HelloController implements Initializable {
         today.set(Calendar.MILLISECOND, 0);
 
         if (!thisDate.isValid()) {
-            output.appendText("Patient dob: " + birthString + " is not a valid calendar date.\n");
+            output.appendText("Patient dob: " + thisDate + " is not a valid calendar date.\n");
             return null;
         }
         if (inputDate.after(today)) {
-            output.appendText("Patient dob: " + birthString + " is today or a date after today.\n");
+            output.appendText("Patient dob: " + thisDate + " is today or a date after today.\n");
             return null;
         }
         return thisDate;
