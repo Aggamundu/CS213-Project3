@@ -15,7 +15,7 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 
 
-public class HelloController implements Initializable {
+public class ClinicManagerController implements Initializable {
     private static List<Provider> providers = new List<>(); // Single list for all providers
     private static List<Appointment> appointments = new List<>(); // Single list for both office and imaging appointments
     private static List<Technician> technicians = new List<>();
@@ -116,6 +116,9 @@ public class HelloController implements Initializable {
         col_zip.setCellValueFactory(new PropertyValueFactory<>("zip"));
     }
 
+    /**
+     * disables schedule unless all fields are filled
+     */
     private void checkFields(){
         boolean fieldsFilled = !fnameSchedule.getText().trim().isEmpty()
                 && !lnameSchedule.getText().trim().isEmpty()
@@ -127,6 +130,9 @@ public class HelloController implements Initializable {
         scheduleButton.setDisable(!fieldsFilled);
     }
 
+    /**
+     * disable reschedule unless all fields are filled
+     */
     private void checkFieldsReschedule(){
         boolean fieldsFilled = !fnameReschedule.getText().trim().isEmpty()
                 && !lnameReschedule.getText().trim().isEmpty()

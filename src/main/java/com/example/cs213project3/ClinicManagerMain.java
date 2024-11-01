@@ -8,13 +8,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
 import javafx.stage.Stage;
 
-import javax.swing.*;
 import java.io.IOException;
 
 
 
 
-public class HelloApplication extends Application{
+public class ClinicManagerMain extends Application{
     public static void main(String[] args) {
         launch(args);
     }
@@ -22,7 +21,8 @@ public class HelloApplication extends Application{
     private ComboBox timeslotBox;
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("hello-view.fxml"));
+        stage.setTitle("Clinic Manager App");
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("clinic-view.fxml"));
         Parent root = fxmlLoader.load();  // Correctly loading the FXML file
         Scene scene = new Scene(root);    // Use root as the parent node in your scene
         stage.setScene(scene);
